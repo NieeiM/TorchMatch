@@ -6,8 +6,15 @@ export type MatchType = 'exact' | 'same-major-fallback' | 'cross-major-fallback'
 export interface WheelBuild {
   kind: 'cpu' | 'cuda' | 'unknown'
   tag: string
+  evidence: 'filename' | 'official-index' | 'shared-cpu-index' | 'platform-policy' | 'ambiguous'
+  filenameDeclared: boolean
   major?: number
   minor?: number
+}
+
+export interface WheelUrl {
+  url: string
+  sourceIndex: string
 }
 
 export interface Wheel {
@@ -21,11 +28,14 @@ export interface Wheel {
   architectures: Architecture[]
   filename: string
   url: string
-  sourceDirectory: string
+  sha256: string | null
+  sourceIndexes: string[]
+  urls: WheelUrl[]
+  warnings: string[]
 }
 
 export interface WheelData {
-  schemaVersion: number
+  schemaVersion: 2
   generatedAt: string
   source: string
   wheelCount: number

@@ -28,7 +28,7 @@ jobs:
       - name: Fetch official indexes
         run: python scripts/fetch_wheels.py
       - name: Validate generated data
-        run: python -c "import json; d=json.load(open('public/data/wheels.json')); assert d['schemaVersion']==1 and d['wheelCount']==len(d['wheels']) and d['wheelCount']>0"
+        run: python -c "import json; d=json.load(open('public/data/wheels.json')); assert d['schemaVersion']==2 and d['wheelCount']==len(d['wheels']) and d['wheelCount']>0"
       - name: Commit updated data
         run: |
           if git diff --quiet -- public/data/wheels.json; then
@@ -40,4 +40,3 @@ jobs:
           git add public/data/wheels.json
           git commit -m "data: update official wheel index"
           git push
-

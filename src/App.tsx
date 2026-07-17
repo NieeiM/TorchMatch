@@ -15,6 +15,13 @@ const matchLabels: Record<string, string> = {
   exact: '精确匹配', 'same-major-fallback': '同大版本 fallback',
   'cross-major-fallback': '跨大版本 fallback', 'cpu-fallback': 'CPU fallback',
 }
+const evidenceLabels: Record<Wheel['build']['evidence'], string> = {
+  filename: '文件名声明',
+  'official-index': '官方索引识别',
+  'shared-cpu-index': 'CPU 索引共享',
+  'platform-policy': '平台规则识别',
+  ambiguous: '构建信息有歧义',
+}
 
 function SelectField({ label, value, options, onChange, format = (x) => x }: {
   label: string; value: string; options: string[]; onChange: (value: string) => void; format?: (value: string) => string
@@ -82,8 +89,8 @@ function GroupCard({ group, defaultOpen, selectedUrl, onSelect }: { group: Wheel
           const selected = wheel.url === selectedUrl
           return <div key={wheel.url} className={`rounded-xl border p-3 sm:flex sm:items-center sm:justify-between sm:gap-4 ${selected ? 'border-ink bg-white' : 'border-zinc-200 bg-white/70'}`}>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"><strong>Python {wheel.pythonTags.join('/')}</strong><span>{wheel.os.map((x) => systemLabels[x] || x).join('/')}</span><span>{wheel.architectures.join('/')}</span></div>
-              <details className="mt-1 text-xs text-zinc-500"><summary className="cursor-pointer select-none hover:text-ink">查看 ABI、平台和文件名</summary><div className="mt-2 space-y-1 rounded-lg bg-zinc-100 p-2 font-mono"><p>ABI: {wheel.abiTags.join(', ')}</p><p>Platform: {wheel.platformTags.join(', ')}</p><p className="break-all">{wheel.filename}</p></div></details>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"><strong>Python {wheel.pythonTags.join('/')}</strong><span>{wheel.os.map((x) => systemLabels[x] || x).join('/')}</span><span>{wheel.architectures.join('/')}</span><span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-600">{evidenceLabels[wheel.build.evidence]}</span></div>
+              <details className="mt-1 text-xs text-zinc-500"><summary className="cursor-pointer select-none hover:text-ink">查看识别证据、ABI、平台和文件名</summary><div className="mt-2 space-y-1 rounded-lg bg-zinc-100 p-2 font-mono"><p>Build evidence: {wheel.build.evidence}{!wheel.build.filenameDeclared && wheel.build.kind === 'cuda' ? ` (${wheel.sourceIndexes.join(', ')})` : ''}</p><p>ABI: {wheel.abiTags.join(', ')}</p><p>Platform: {wheel.platformTags.join(', ')}</p><p>SHA256: {wheel.sha256 ? `${wheel.sha256.slice(0, 16)}…` : 'not provided'}</p><p>Source indexes: {wheel.sourceIndexes.join(', ')}</p><p className="break-all">{wheel.filename}</p>{wheel.warnings.map((warning) => <p key={warning} className="text-amber-700">Warning: {warning}</p>)}</div></details>
             </div>
             <button type="button" className={`mt-3 w-full rounded-lg px-4 py-2 text-sm font-semibold transition sm:mt-0 sm:w-auto ${selected ? 'bg-sage text-ink' : 'bg-ink text-white hover:bg-zinc-700'}`} onClick={() => onSelect(result)}>{selected ? '已选择' : '选择此 wheel'}</button>
           </div>
@@ -133,7 +140,10 @@ export default function App() {
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/wheels.json`)
       .then((response) => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json() })
-      .then((payload: WheelData) => setData(payload))
+      .then((payload: WheelData) => {
+        if (payload.schemaVersion !== 2) throw new Error(`不支持的数据 schema：${payload.schemaVersion}`)
+        setData(payload)
+      })
       .catch((error: Error) => setLoadError(error.message))
   }, [])
 

@@ -15,6 +15,7 @@ function cudaNumber(tag: string): { major: number; minor: number } | null {
 }
 
 function baseMatches(wheel: Wheel, query: SearchQuery, includeBuild = true): boolean {
+  if (wheel.build.kind === 'unknown') return false
   if (query.package && wheel.package !== query.package) return false
   if (query.version && wheel.version !== query.version) return false
   if (query.python && !wheel.pythonTags.includes(pythonToTag(query.python))) return false

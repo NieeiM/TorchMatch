@@ -3,9 +3,10 @@ import { generateCommands } from './commands'
 import type { PackageName, Wheel } from './types'
 
 const wheel = (packageName: PackageName, version: string): Wheel => ({
-  package: packageName, version, build: { kind: 'cuda', tag: 'cu124', major: 12, minor: 4 },
+  package: packageName, version, build: { kind: 'cuda', tag: 'cu124', evidence: 'filename', filenameDeclared: true, major: 12, minor: 4 },
   pythonTags: ['cp310'], abiTags: ['cp310'], platformTags: ['manylinux2014_x86_64'], os: ['linux'], architectures: ['x86_64'],
-  filename: `${packageName}.whl`, url: `https://example/${packageName}`, sourceDirectory: 'cu124',
+  filename: `${packageName}.whl`, url: `https://example/${packageName}`, sha256: packageName.padEnd(64, '0'),
+  sourceIndexes: ['cu124'], urls: [{ url: `https://example/${packageName}`, sourceIndex: 'cu124' }], warnings: [],
 })
 
 describe('generateCommands', () => {
@@ -21,4 +22,3 @@ describe('generateCommands', () => {
     expect(result.install).toBe('python -m pip install torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu124')
   })
 })
-

@@ -30,7 +30,7 @@ python -m venv .venv
 .venv/bin/python scripts/fetch_wheels.py
 ```
 
-抓取器只接受 `cpu`、`cuNNN` 稳定版目录以及 `torch`、`torchvision`、`torchaudio` 三个包。CUDA build 仅由 wheel 文件名 local version（例如 `+cu124`）决定，绝不由索引目录猜测。
+抓取器只接受 `cpu`、`cuNNN` 稳定版目录以及 `torch`、`torchvision`、`torchaudio` 三个包。build 识别采用分级证据：优先使用文件名 local version（例如 `+cu124`）；无标记时按 SHA256 聚合官方索引归属，只在来源唯一且平台允许时使用 build-specific 索引判定。歧义记录不会参与精确匹配或命令生成。
 
 ## GitHub Pages
 
@@ -51,4 +51,3 @@ python -m venv .venv
 - 无匹配时展示逐项差异最少的 wheel，但不会将其标为兼容。
 
 更完整的设计与验收规则见 [PLAN.md](./PLAN.md)。
-

@@ -11,12 +11,6 @@ function unique<T>(values: T[]): T[] {
   return [...new Set(values)]
 }
 
-function preferCanonicalSource(current: MatchResult, candidate: MatchResult): MatchResult {
-  const currentCanonical = current.wheel.sourceDirectory === current.actualBuild
-  const candidateCanonical = candidate.wheel.sourceDirectory === candidate.actualBuild
-  return candidateCanonical && !currentCanonical ? candidate : current
-}
-
 export function groupMatchResults(results: MatchResult[]): WheelResultGroup[] {
   const grouped = new Map<string, MatchResult[]>()
   for (const result of results) {
@@ -25,12 +19,12 @@ export function groupMatchResults(results: MatchResult[]): WheelResultGroup[] {
   }
 
   return [...grouped.entries()].map(([key, candidates]) => {
-    const byFilename = new Map<string, MatchResult>()
+    const byArtifact = new Map<string, MatchResult>()
     for (const candidate of candidates) {
-      const current = byFilename.get(candidate.wheel.filename)
-      byFilename.set(candidate.wheel.filename, current ? preferCanonicalSource(current, candidate) : candidate)
+      const artifactId = candidate.wheel.sha256 || candidate.wheel.url
+      if (!byArtifact.has(artifactId)) byArtifact.set(artifactId, candidate)
     }
-    const deduplicated = [...byFilename.values()].sort((a, b) => {
+    const deduplicated = [...byArtifact.values()].sort((a, b) => {
       const python = b.wheel.pythonTags.join().localeCompare(a.wheel.pythonTags.join(), undefined, { numeric: true })
       if (python) return python
       const system = a.wheel.os.join().localeCompare(b.wheel.os.join())
@@ -61,4 +55,3 @@ export function groupMatchResults(results: MatchResult[]): WheelResultGroup[] {
     return b.buildTag.localeCompare(a.buildTag, undefined, { numeric: true })
   })
 }
-
