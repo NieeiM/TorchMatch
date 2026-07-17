@@ -3,7 +3,8 @@ import type { PackageName, Wheel } from './types'
 const INDEX_ROOT = 'https://download.pytorch.org/whl'
 
 export interface CommandSet {
-  install: string | null
+  installSingle: string
+  installBundle: string | null
   download: string
   companions: Wheel[]
   warning?: string
@@ -38,6 +39,7 @@ function pickCompanion(selected: Wheel, wheels: Wheel[], packageName: PackageNam
 
 export function generateCommands(selected: Wheel, wheels: Wheel[]): CommandSet {
   const index = `${INDEX_ROOT}/${selected.build.tag}`
+  const installSingle = `python -m pip install ${selected.package}==${selected.version} --index-url ${index}`
   const abi = selected.abiTags[0] || selected.pythonTags[0]
   const pythonTag = selected.pythonTags.find((tag) => /^cp\d+$/.test(tag)) || selected.pythonTags[0]
   const pyDigits = pythonTag?.replace('cp', '') || ''
@@ -46,19 +48,19 @@ export function generateCommands(selected: Wheel, wheels: Wheel[]): CommandSet {
   const download = `python -m pip download ${selected.package}==${selected.version} --index-url ${index} --python-version ${pythonVersion} --implementation cp --abi ${abi} --platform ${platform} --only-binary=:all: --no-deps`
 
   if (selected.package !== 'torch') {
-    return { install: `python -m pip install ${selected.package}==${selected.version} --index-url ${index}`, download, companions: [] }
+    return { installSingle, installBundle: null, download, companions: [] }
   }
 
   const vision = pickCompanion(selected, wheels, 'torchvision')
   const audio = pickCompanion(selected, wheels, 'torchaudio')
   if (!vision || !audio) {
     const missing = [!vision && 'torchvision', !audio && 'torchaudio'].filter(Boolean).join('、')
-    return { install: null, download, companions: [vision, audio].filter((x): x is Wheel => Boolean(x)), warning: `真实 wheel 数据中缺少兼容的 ${missing}，为避免给出错误组合，暂不生成三件套安装命令。` }
+    return { installSingle, installBundle: null, download, companions: [vision, audio].filter((x): x is Wheel => Boolean(x)), warning: `真实 wheel 数据中缺少兼容的 ${missing}，为避免给出错误组合，暂不生成三件套安装命令。` }
   }
   return {
-    install: `python -m pip install torch==${selected.version} torchvision==${vision.version} torchaudio==${audio.version} --index-url ${index}`,
+    installSingle,
+    installBundle: `python -m pip install torch==${selected.version} torchvision==${vision.version} torchaudio==${audio.version} --index-url ${index}`,
     download,
     companions: [vision, audio],
   }
 }
-

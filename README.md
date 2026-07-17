@@ -1,19 +1,27 @@
+[中文readme](README_zh.md)
+
 # TorchMatch
 
-TorchMatch 检索 PyTorch 官方稳定版 wheel，并根据目标 Python、CUDA、操作系统和机器架构生成可复制的 pip 安装或下载命令。
+TorchMatch searches official stable PyTorch wheels and generates copy-ready pip install and download commands for a target Python version, CUDA version, operating system, and machine architecture.
 
-它不在浏览器里爬取官网。GitHub Actions 定期解析 `https://download.pytorch.org/whl/` 中的真实 wheel 文件名，生成 `public/data/wheels.json`，前端只读取这份静态数据，因此可直接部署到 GitHub Pages。
+Try the deployed app at [nieeim.github.io/TorchMatch](https://nieeim.github.io/TorchMatch/).
 
-## 本地开发
+## Local development
 
-要求 Node.js 20+、npm 和 Python 3.10+。
+Requirements: Node.js 20+, npm, and Python 3.10+.
 
 ```bash
 npm install
 npm run dev
 ```
 
-运行前端检查：
+You can also start the development server with:
+
+```bash
+./serve.sh
+```
+
+Run frontend checks:
 
 ```bash
 npm run lint
@@ -21,7 +29,7 @@ npm run test -- --run
 npm run build
 ```
 
-运行抓取器和 Python 测试：
+Run the crawler and Python tests:
 
 ```bash
 python -m venv .venv
@@ -30,24 +38,26 @@ python -m venv .venv
 .venv/bin/python scripts/fetch_wheels.py
 ```
 
-抓取器只接受 `cpu`、`cuNNN` 稳定版目录以及 `torch`、`torchvision`、`torchaudio` 三个包。build 识别采用分级证据：优先使用文件名 local version（例如 `+cu124`）；无标记时按 SHA256 聚合官方索引归属，只在来源唯一且平台允许时使用 build-specific 索引判定。歧义记录不会参与精确匹配或命令生成。
+The crawler accepts only stable `cpu` and `cuNNN` indexes and the `torch`, `torchvision`, and `torchaudio` packages. Build detection uses ranked evidence: a local version in the filename, such as `+cu124`, takes precedence. For unmarked files, artifacts are grouped by SHA256 and classified from their official index membership only when the source is unambiguous and the platform permits that inference. Ambiguous records are excluded from exact matches and command generation.
 
 ## GitHub Pages
 
-仓库包含两个工作流：
+The repository includes two workflows:
 
-- `update-wheel-data.yml` 每日或手动刷新官方 wheel 数据，并在内容变化时提交。
-- `deploy-pages.yml` 在 `main` 更新后执行测试、构建并发布 Pages。
+- `update-wheel-data.yml` refreshes official wheel data daily or on manual dispatch and commits it when the dataset changes.
+- `deploy-pages.yml` tests, builds, and publishes the site when `main` changes or after the wheel-data workflow succeeds.
 
-在仓库 Settings → Pages 中将 Source 设为 **GitHub Actions**。构建时会自动将 Vite base path 设为仓库名；本地默认使用 `/`。
+In repository **Settings → Pages**, set **Source** to **GitHub Actions**. The build automatically sets the Vite base path to the repository name; local development uses `/`.
 
-## 匹配行为
+## Matching behavior
 
-- 所有筛选条件均可为空。
-- 精确 CUDA 不存在且允许 fallback 时，优先同大版本内距离最近的 CUDA，再考虑其他大版本。
-- CPU fallback 是独立开关，默认关闭。
-- fallback 结果明确展示请求和实际 CUDA。
-- 选择 `torch` 时，只有真实数据中同时存在兼容环境的 `torchvision` 与 `torchaudio`，才生成三件套命令。
-- 无匹配时展示逐项差异最少的 wheel，但不会将其标为兼容。
+- Every filter is optional.
+- If an exact CUDA build is unavailable and CUDA fallback is enabled, TorchMatch prefers the nearest version in the same CUDA major release before considering another major release.
+- CPU fallback is a separate option and is disabled by default.
+- Fallback results clearly show the requested and actual CUDA builds.
+- Selecting a `torch` wheel provides both a three-package PyTorch bundle command and a torch-only command. The bundle is generated only when compatible `torchvision` and `torchaudio` wheels exist in the real dataset; the torch-only command is always available.
+- When no exact match exists, TorchMatch shows wheels with the fewest differences without marking them as compatible.
 
-更完整的设计与验收规则见 [PLAN.md](./PLAN.md)。
+## Languages
+
+The web interface is available in English and Simplified Chinese. English is the default; use the language button in the top navigation to switch. The preference is saved in the browser.

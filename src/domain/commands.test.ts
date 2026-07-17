@@ -13,12 +13,21 @@ describe('generateCommands', () => {
   it('includes all three packages for torch', () => {
     const selected = wheel('torch', '2.4.1')
     const result = generateCommands(selected, [selected, wheel('torchvision', '0.19.1'), wheel('torchaudio', '2.4.1')])
-    expect(result.install).toContain('torchvision==0.19.1')
-    expect(result.install).toContain('torchaudio==2.4.1')
+    expect(result.installBundle).toContain('torchvision==0.19.1')
+    expect(result.installBundle).toContain('torchaudio==2.4.1')
+    expect(result.installSingle).toBe('python -m pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu124')
   })
 
   it('does not add torch for torchvision', () => {
     const result = generateCommands(wheel('torchvision', '0.19.1'), [])
-    expect(result.install).toBe('python -m pip install torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu124')
+    expect(result.installSingle).toBe('python -m pip install torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu124')
+    expect(result.installBundle).toBeNull()
+  })
+
+  it('keeps single torch install available when companions are missing', () => {
+    const result = generateCommands(wheel('torch', '2.4.1'), [])
+    expect(result.installBundle).toBeNull()
+    expect(result.installSingle).toContain('torch==2.4.1')
+    expect(result.warning).toContain('暂不生成三件套')
   })
 })
