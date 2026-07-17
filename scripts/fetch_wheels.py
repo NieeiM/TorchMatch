@@ -16,6 +16,7 @@ from urllib.parse import parse_qs, unquote, urljoin, urlparse, urlunparse
 import requests
 from bs4 import BeautifulSoup
 from packaging.utils import InvalidWheelFilename, parse_wheel_filename
+from packaging.version import InvalidVersion, Version
 
 ROOT = "https://download.pytorch.org/whl/"
 PACKAGES = ("torch", "torchvision", "torchaudio")
@@ -73,6 +74,10 @@ def parse_wheel_url(url: str, source_directory: str) -> dict[str, Any] | None:
         return None
     package = package.replace("-", "_")
     if package not in PACKAGES:
+        return None
+    # The official cpu/cuNNN indexes occasionally contain development or
+    # pre-release artifacts. Index membership alone does not make them stable.
+    if version.is_devrelease or version.is_prerelease:
         return None
 
     python_tags = sorted({tag.interpreter for tag in tags})
@@ -241,6 +246,12 @@ def write_data(path: Path, wheels: list[dict[str, Any]]) -> None:
     found = {wheel["package"] for wheel in wheels}
     if found != set(PACKAGES):
         raise ValueError(f"Missing packages: {sorted(set(PACKAGES) - found)}")
+    try:
+        unstable = [wheel["version"] for wheel in wheels if Version(wheel["version"]).is_prerelease]
+    except InvalidVersion as exc:
+        raise ValueError(f"Refusing to write an invalid package version: {exc}") from exc
+    if unstable:
+        raise ValueError(f"Refusing to write pre-release wheels, for example: {unstable[0]}")
     payload = {
         "schemaVersion": 2,
         "generatedAt": datetime.now(timezone.utc).isoformat(),

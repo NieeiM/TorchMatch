@@ -121,3 +121,23 @@ def test_platform_mapping():
 def test_unknown_local_build_is_not_guessed():
     assert parse_build("rocm6.1") == {"kind": "unknown", "tag": "rocm6.1"}
     assert parse_build(None) is None
+
+
+def test_development_and_release_candidate_wheels_are_excluded():
+    assert parse_wheel_url(
+        "https://download.pytorch.org/whl/cu126/torch-2.13.0.dev20260610%2Bcu126-cp311-cp311-linux_x86_64.whl",
+        "cu126",
+    ) is None
+    assert parse_wheel_url(
+        "https://download.pytorch.org/whl/cu126/torch-2.13.0rc1%2Bcu126-cp311-cp311-linux_x86_64.whl",
+        "cu126",
+    ) is None
+
+
+def test_post_release_wheel_is_retained_as_stable():
+    item = parse_wheel_url(
+        "https://download.pytorch.org/whl/cpu/torch-2.12.0.post1%2Bcpu-cp311-cp311-linux_x86_64.whl",
+        "cpu",
+    )
+    assert item is not None
+    assert item["version"] == "2.12.0.post1"
