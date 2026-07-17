@@ -152,7 +152,7 @@ export default function App() {
     <header className="relative mx-auto max-w-7xl px-5 pb-14 pt-6 sm:px-8 sm:pb-20">
       <nav className="flex items-center justify-between">
         <a href={import.meta.env.BASE_URL} className="flex items-center gap-2 text-lg font-black tracking-tight"><span className="grid h-8 w-8 place-items-center rounded-lg bg-ember text-white"><Zap size={18} fill="currentColor" /></span>TorchMatch</a>
-        <a href="https://github.com/meijiahao/TorchMatch" target="_blank" rel="noreferrer" className="btn-secondary !bg-white/50"><Github size={17} /> <span className="hidden sm:inline">GitHub</span></a>
+        <a href="https://github.com/NieeiM/TorchMatch" target="_blank" rel="noreferrer" className="btn-secondary !bg-white/50"><Github size={17} /> <span className="hidden sm:inline">GitHub</span></a>
       </nav>
       <div className="mt-16 max-w-4xl sm:mt-24">
         <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-300 bg-white/60 px-3 py-1.5 text-xs font-semibold backdrop-blur"><ShieldCheck size={15} className="text-ember" /> 只检索 PyTorch 官方稳定版 wheel</div>
